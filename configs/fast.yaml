@@ -1,0 +1,43 @@
+# ──────────────────────────────────────────────────────────────
+# Fast Configuration — Quick iteration & ablation experiments
+# ──────────────────────────────────────────────────────────────
+
+# Base model
+model_id: "google-t5/t5-small"
+
+# Dataset — small subsets for speed
+dataset_name: "Andyrasika/TweetSumm-tuned"
+n_train: 100
+n_eval: 20
+n_test: 20
+
+# Tokenization
+max_src_length: 512
+max_tgt_length: 64
+prefix: "summarize: "
+
+# LoRA hyperparameters
+lora:
+  r: 8
+  alpha: 16
+  dropout: 0.05
+  target_modules: ["q", "v"]
+  use_rslora: true
+
+# Training — single epoch for fast feedback
+training:
+  epochs: 1
+  batch_size: 4
+  learning_rate: 1.0e-3
+  logging_steps: 10
+  eval_strategy: "epoch"
+  bf16_on_cuda: true
+  output_dir: "checkpoints/t5-lora-tweetsumm"
+
+# Inference
+inference:
+  max_new_tokens: 64
+  num_beams: 4
+
+# Output
+results_dir: "results"

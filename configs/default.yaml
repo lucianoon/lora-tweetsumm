@@ -1,0 +1,43 @@
+# ──────────────────────────────────────────────────────────────
+# LoRA Fine-Tuning Configuration — TweetSumm Dialogue Summarization
+# ──────────────────────────────────────────────────────────────
+
+# Base model
+model_id: "google-t5/t5-small"       # Swap to "google-t5/t5-base" for higher quality
+
+# Dataset
+dataset_name: "Andyrasika/TweetSumm-tuned"
+n_train: 300                          # Subset size for fast iteration (max: 879)
+n_eval: 50
+n_test: 50                            # Samples for evaluation
+
+# Tokenization
+max_src_length: 512
+max_tgt_length: 64
+prefix: "summarize: "
+
+# LoRA hyperparameters
+lora:
+  r: 4                               # Rank of the low-rank matrices (optimal per ablation study)
+  alpha: 16                           # Scaling factor (effective lr ∝ alpha/sqrt(r) with rsLoRA)
+  dropout: 0.05
+  target_modules: ["q", "v"]         # Attention projections to adapt
+  use_rslora: true                    # Rank-stabilized LoRA (Kalajdzievski 2023)
+
+# Training
+training:
+  epochs: 3
+  batch_size: 4
+  learning_rate: 1.0e-3              # LoRA benefits from higher lr than full fine-tune
+  logging_steps: 20
+  eval_strategy: "epoch"
+  bf16_on_cuda: true                 # Enable bf16 only on CUDA devices
+  output_dir: "checkpoints/t5-lora-tweetsumm"
+
+# Inference
+inference:
+  max_new_tokens: 64
+  num_beams: 4                       # Beam search for better generation quality
+
+# Output
+results_dir: "results"

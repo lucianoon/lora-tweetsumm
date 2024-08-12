@@ -1,0 +1,45 @@
+# ──────────────────────────────────────────────────────────────
+# T5-Base Configuration — Higher quality at the cost of speed
+# ──────────────────────────────────────────────────────────────
+# T5-Base has ~220M parameters vs T5-Small's ~60M.
+# Expect better ROUGE scores but ~4x longer training time.
+
+# Base model
+model_id: "google-t5/t5-base"
+
+# Dataset
+dataset_name: "Andyrasika/TweetSumm-tuned"
+n_train: 300
+n_eval: 50
+n_test: 50
+
+# Tokenization
+max_src_length: 512
+max_tgt_length: 64
+prefix: "summarize: "
+
+# LoRA hyperparameters
+lora:
+  r: 4                               # Optimal rank (per ablation on t5-small)
+  alpha: 16
+  dropout: 0.05
+  target_modules: ["q", "v"]
+  use_rslora: true
+
+# Training — smaller batch for larger model
+training:
+  epochs: 3
+  batch_size: 2                       # Reduced from 4 due to larger model memory
+  learning_rate: 1.0e-3
+  logging_steps: 20
+  eval_strategy: "epoch"
+  bf16_on_cuda: true
+  output_dir: "checkpoints/t5-base-lora-tweetsumm"
+
+# Inference
+inference:
+  max_new_tokens: 64
+  num_beams: 4
+
+# Output
+results_dir: "results"

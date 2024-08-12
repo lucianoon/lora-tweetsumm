@@ -1,0 +1,43 @@
+# Version control
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Model artifacts (large files)
+checkpoints/
+t5-lora-*/
+
+# Results (regenerated)
+results/*.json
+results/*.png
+
+# Tests & CI
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Documentation
+*.md
+!README.md
+LICENSE
+
+# Notebooks (optional, not needed in container)
+notebooks/
+.ruff_cache/
+.mypy_cache/
+.cache/
+lora_tweetsumm.egg-info/
+*.pyc
+*.pyo

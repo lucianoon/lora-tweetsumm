@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lora-tweetsumm"
+version = "1.0.0"
+description = "LoRA fine-tuning of T5 for dialogue summarization on TweetSumm"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Luciano Nunes"},
+]
+keywords = ["lora", "peft", "t5", "summarization", "nlp", "fine-tuning", "transformers"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "torch>=2.1",
+    "transformers>=4.44",
+    "datasets>=2.18",
+    "peft>=0.11",
+    "accelerate>=0.30",
+    "evaluate>=0.4",
+    "rouge-score>=0.1.2",
+    "sentencepiece>=0.2",
+    "pyyaml>=6.0",
+    "tqdm>=4.66",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4",
+    "pytest>=8.0",
+    "ipykernel>=6.0",
+]
+demo = [
+    "gradio>=4.0",
+    "sacremoses>=0.1",
+]
+
+[project.scripts]
+lora-train = "scripts.train:main"
+lora-eval = "scripts.evaluate:main"
+lora-experiment = "scripts.experiments:main"
+
+[project.urls]
+Repository = "https://github.com/lucianoon/lora-tweetsumm"
+
+[tool.setuptools.packages.find]
+include = ["src*", "scripts*", "tests*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*.py" = ["E402"]  # sys.path manipulation before imports is intentional
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: tests that download models or datasets (deselect with '-m \"not slow\"')",
+]
+addopts = "-v --tb=short"

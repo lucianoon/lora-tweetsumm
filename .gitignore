@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Model checkpoints & outputs
+t5-lora-*/
+checkpoints/
+results/*.json
+results/*.csv
+results/*.txt
+!results/.gitkeep
+
+# Experiment tracking
+wandb/
+mlruns/
+runs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Misc
+*.log
+.env
+
+# Testing & Coverage
+.pytest_cache/
+htmlcov/
+.coverage
+
+
+# Tool caches
+.ruff_cache/
+.mypy_cache/
+.cache/
+
+# Hugging Face / ML caches
+.huggingface/
+hf_cache/
+
+# Local model/data artifacts
+*.safetensors
+*.pt
+*.pth
+*.bin
+
+# Keep selected result artifacts only when explicitly force-added
