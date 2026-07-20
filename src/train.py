@@ -54,7 +54,6 @@ def create_trainer(
         bf16=(config.device == "cuda" and config.training.bf16_on_cuda),
         save_strategy="epoch",
         save_total_limit=2,
-        save_safetensors=True,
         load_best_model_at_end=False,
         remove_unused_columns=True,
     )
@@ -101,10 +100,6 @@ def run_training(trainer: Seq2SeqTrainer) -> dict:
 
     metrics = result.metrics
     metrics["wall_time_seconds"] = round(wall_time, 2)
-
-    n_samples = metrics.get("train_samples_per_second", 0) * wall_time
-    if n_samples > 0:
-        metrics["effective_samples_per_second"] = round(n_samples / wall_time, 2)
 
     logger.info(
         "Training complete — loss=%.4f, wall_time=%.1fs, runtime=%.1fs",

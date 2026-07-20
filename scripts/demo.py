@@ -124,10 +124,10 @@ def create_app(
 
     def get_en_pt():
         if not translator_en_pt:
-            logger.info("Loading translation model (EN -> PT: Helsinki-NLP/opus-mt-en-pt)...")
+            logger.info("Loading translation model (EN -> PT: Helsinki-NLP/opus-mt-tc-big-en-pt)...")
             from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-            model_name = "Helsinki-NLP/opus-mt-en-pt"
+            model_name = "Helsinki-NLP/opus-mt-tc-big-en-pt"
             tok = AutoTokenizer.from_pretrained(model_name)
             mod = AutoModelForSeq2SeqLM.from_pretrained(model_name)
             translator_en_pt.append((tok, mod))
@@ -240,7 +240,7 @@ def create_app(
             </div>
             <div class="badge-row">
                 <span class="badge">🤖 T5-Small</span>
-                <span class="badge">⚡ LoRA r=8</span>
+                <span class="badge">⚡ LoRA r=4</span>
                 <span class="badge">🍎 Apple MPS</span>
                 <span class="badge">📊 ~0.5% trainable params</span>
             </div>

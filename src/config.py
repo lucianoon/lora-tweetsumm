@@ -10,7 +10,6 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
 
 import torch
 import yaml
@@ -28,7 +27,7 @@ class LoraParams:
     r: int = 8
     alpha: int = 16
     dropout: float = 0.05
-    target_modules: List[str] = field(default_factory=lambda: ["q", "v"])
+    target_modules: list[str] = field(default_factory=lambda: ["q", "v"])
     use_rslora: bool = True
 
 
