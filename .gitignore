@@ -61,3 +61,9 @@ hf_cache/
 *.bin
 
 # Keep selected result artifacts only when explicitly force-added
+
+# Deployment build artifacts
+merged-model/
+onnx-out/
+hub-adapter/
+hub-onnx/
