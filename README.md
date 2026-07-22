@@ -133,6 +133,13 @@ The demo defaults are optimized for local responsiveness: translation is off,
 `num_beams=1`, and `max_new_tokens=48`. Enable PT↔EN translation only when
 needed, because it loads additional translation models.
 
+### Hosted demo (Hugging Face Spaces)
+
+The [`space/`](space/) folder contains a self-contained build of this demo,
+ready to deploy to a free CPU Space — the app loads the trained LoRA adapter
+straight from the Hub. See [space/DEPLOY.md](space/DEPLOY.md) for the
+step-by-step guide (two uploads, ~5 minutes).
+
 ---
 
 ## 📁 Project Structure
@@ -162,6 +169,8 @@ lora-tweetsumm/
 │   ├── evaluate.py           # ROUGE evaluation with baseline comparison
 │   ├── experiments.py        # Rank ablation experiments & visualization
 │   └── demo.py               # Gradio interactive demo
+│
+├── space/                    # Self-contained Hugging Face Space (see DEPLOY.md)
 │
 ├── tests/                    # Unit & integration test suite
 │   ├── conftest.py           # Shared fixtures
