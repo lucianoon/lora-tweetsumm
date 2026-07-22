@@ -124,7 +124,9 @@ def create_app(
 
     def get_en_pt():
         if not translator_en_pt:
-            logger.info("Loading translation model (EN -> PT: Helsinki-NLP/opus-mt-tc-big-en-pt)...")
+            logger.info(
+                "Loading translation model (EN -> PT: Helsinki-NLP/opus-mt-tc-big-en-pt)..."
+            )
             from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
             model_name = "Helsinki-NLP/opus-mt-tc-big-en-pt"
