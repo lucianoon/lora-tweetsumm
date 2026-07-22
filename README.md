@@ -9,6 +9,7 @@
 [![PEFT](https://img.shields.io/badge/PEFT-LoRA-FF6F00)](https://huggingface.co/docs/peft)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/lucianoon/lora-tweetsumm/actions/workflows/ci.yml/badge.svg)](https://github.com/lucianoon/lora-tweetsumm/actions/workflows/ci.yml)
+[![Live Demo](https://img.shields.io/badge/🤗_Live_Demo-in--browser-blue)](https://huggingface.co/spaces/lucianoon/lora-tweetsumm-demo)
 
 </div>
 
@@ -133,12 +134,23 @@ The demo defaults are optimized for local responsiveness: translation is off,
 `num_beams=1`, and `max_new_tokens=48`. Enable PT↔EN translation only when
 needed, because it loads additional translation models.
 
-### Hosted demo (Hugging Face Spaces)
+### 🌐 Live demo — runs in your browser
 
-The [`space/`](space/) folder contains a self-contained build of this demo,
-ready to deploy to a free CPU Space — the app loads the trained LoRA adapter
-straight from the Hub. See [space/DEPLOY.md](space/DEPLOY.md) for the
-step-by-step guide (two uploads, ~5 minutes).
+**Try it now: [huggingface.co/spaces/lucianoon/lora-tweetsumm-demo](https://huggingface.co/spaces/lucianoon/lora-tweetsumm-demo)**
+
+The hosted demo runs the model **entirely in the visitor's browser** via
+[Transformers.js](https://huggingface.co/docs/transformers.js): the LoRA
+adapter is merged into T5-Small, exported to ONNX and quantized to INT8
+(~90 MB one-time download, then cached). No server, no API keys — the text
+never leaves the page. Source in [`space-static/`](space-static/); ONNX
+weights at
+[`lucianoon/t5-small-lora-tweetsumm-onnx`](https://huggingface.co/lucianoon/t5-small-lora-tweetsumm-onnx).
+
+The [`space/`](space/) folder also contains a server-side Gradio build
+(loads the adapter from
+[`lucianoon/t5-small-lora-tweetsumm`](https://huggingface.co/lucianoon/t5-small-lora-tweetsumm))
+— note that Gradio Spaces now require a HF PRO subscription to host; see
+[space/DEPLOY.md](space/DEPLOY.md).
 
 ---
 
@@ -170,7 +182,8 @@ lora-tweetsumm/
 │   ├── experiments.py        # Rank ablation experiments & visualization
 │   └── demo.py               # Gradio interactive demo
 │
-├── space/                    # Self-contained Hugging Face Space (see DEPLOY.md)
+├── space/                    # Gradio Space build (requires HF PRO — see DEPLOY.md)
+├── space-static/             # Static Space: in-browser demo via Transformers.js (live)
 │
 ├── tests/                    # Unit & integration test suite
 │   ├── conftest.py           # Shared fixtures
