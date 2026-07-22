@@ -106,7 +106,7 @@ def read_adapter_rank(checkpoint: str | Path) -> int | None:
     """
     adapter_config_path = Path(checkpoint) / "adapter_config.json"
     try:
-        with open(adapter_config_path) as f:
+        with open(adapter_config_path, encoding="utf-8") as f:
             adapter_config = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return None

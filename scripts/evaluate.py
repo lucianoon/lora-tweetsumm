@@ -225,7 +225,7 @@ def main() -> None:
         "samples": samples_detail,
     }
 
-    with open(results_path, "w") as f:
+    with open(results_path, "w", encoding="utf-8") as f:
         json.dump(results_payload, f, indent=2, ensure_ascii=False)
 
     logger.info("Detailed results saved to: %s", results_path)

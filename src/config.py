@@ -116,7 +116,7 @@ def load_config(path: str | Path | None = None) -> Config:
         logger.warning("Config file not found at %s — using defaults.", config_path)
         return Config()
 
-    with open(config_path) as f:
+    with open(config_path, encoding="utf-8") as f:
         raw = yaml.safe_load(f) or {}
 
     lora_raw = raw.pop("lora", {})

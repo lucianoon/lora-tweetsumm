@@ -341,7 +341,7 @@ def main() -> None:
         "ranks_tested": sorted(args.ranks),
         "results": results,
     }
-    with open(results_path, "w") as f:
+    with open(results_path, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
     logger.info("Results saved to: %s", results_path)
 
@@ -351,7 +351,7 @@ def main() -> None:
 
     # Also save a "latest" symlink-style copy for README embedding
     latest_json = results_dir / "rank_ablation_latest.json"
-    with open(latest_json, "w") as f:
+    with open(latest_json, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
 
     logger.info("Experiment complete! ✓")
