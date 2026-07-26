@@ -1,284 +1,286 @@
 <div align="center">
 
-# 🧬 LoRA Fine-Tuning — Dialogue Summarization
+# 🧬 Fine-Tuning com LoRA — Sumarização de Diálogos
 
-**Parameter-efficient fine-tuning of T5 for customer service dialogue summarization using Low-Rank Adaptation (LoRA)**
+**Fine-tuning eficiente em parâmetros do T5 para sumarização de diálogos de atendimento ao cliente usando Low-Rank Adaptation (LoRA)**
 
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://python.org)
 [![HuggingFace](https://img.shields.io/badge/🤗_Transformers-4.44%2B-FFD21E)](https://huggingface.co/docs/transformers)
 [![PEFT](https://img.shields.io/badge/PEFT-LoRA-FF6F00)](https://huggingface.co/docs/peft)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/lucianoon/lora-tweetsumm/actions/workflows/ci.yml/badge.svg)](https://github.com/lucianoon/lora-tweetsumm/actions/workflows/ci.yml)
-[![Live Demo](https://img.shields.io/badge/🤗_Live_Demo-in--browser-blue)](https://huggingface.co/spaces/lucianoon/lora-tweetsumm-demo)
+[![Live Demo](https://img.shields.io/badge/🤗_Demo_ao_vivo-no--navegador-blue)](https://huggingface.co/spaces/lucianoon/lora-tweetsumm-demo)
 
 </div>
 
----
-
-## 📋 Overview
-
-This project demonstrates **parameter-efficient fine-tuning** of Google's T5 model for abstractive summarization of customer service dialogues from the [TweetSumm](https://huggingface.co/datasets/Andyrasika/TweetSumm-tuned) dataset.
-
-Instead of updating all ~60M parameters, we use **LoRA (Low-Rank Adaptation)** to train only **~0.5%** of the model weights while achieving strong summarization quality — making the approach practical even on consumer hardware (Apple M-series, single GPU).
-
-### Key Highlights
-
-- 🎯 **< 0.25% trainable parameters** — rank-4 LoRA achieves the best results with only 147K params
-- ⚡ **~53 seconds training** on Apple M4 (MPS) with 300 samples
-- 📊 **ROUGE-L = 0.357** with the optimal rank-4 configuration
-- 🔀 **rsLoRA scaling** (Kalajdzievski 2023) for training stability across ranks
-- 🧪 **Rank ablation study** showing diminishing returns beyond r=4
-
-### Portfolio Snapshot
-
-This repository is structured as an end-to-end applied ML project:
-
-- **Training pipeline:** configurable T5 + LoRA fine-tuning with HuggingFace Trainer
-- **Evaluation:** ROUGE metrics, baseline comparison, and per-sample predictions
-- **Experimentation:** automated LoRA rank ablation with plots and JSON artifacts
-- **Deployment demo:** local Gradio app with trained adapter loading
-- **Engineering hygiene:** typed config dataclasses, tests, linting, CI, Dockerfile
+*[English version](README.en.md)*
 
 ---
 
-## 🏗️ Architecture
+## 📋 Visão geral
+
+Este projeto demonstra **fine-tuning eficiente em parâmetros** do modelo T5 da Google para sumarização abstrativa de diálogos de atendimento ao cliente do dataset [TweetSumm](https://huggingface.co/datasets/Andyrasika/TweetSumm-tuned).
+
+Em vez de atualizar todos os ~60M de parâmetros, usamos **LoRA (Low-Rank Adaptation)** para treinar apenas **~0,5%** dos pesos do modelo, mantendo boa qualidade de sumarização — o que torna a abordagem viável até em hardware de consumidor (Apple série M, GPU única).
+
+### Destaques
+
+- 🎯 **< 0,25% de parâmetros treináveis** — LoRA com rank 4 obtém o melhor resultado com apenas 147K parâmetros
+- ⚡ **~53 segundos de treino** em Apple M4 (MPS) com 300 amostras
+- 📊 **ROUGE-L = 0,357** com a configuração ótima de rank 4
+- 🔀 **Escalonamento rsLoRA** (Kalajdzievski 2023) para estabilidade de treino entre ranks
+- 🧪 **Estudo de ablação de rank** mostrando retornos decrescentes acima de r=4
+
+### Panorama do projeto
+
+Este repositório está estruturado como um projeto de ML aplicado de ponta a ponta:
+
+- **Pipeline de treino:** fine-tuning configurável de T5 + LoRA com o Trainer da HuggingFace
+- **Avaliação:** métricas ROUGE, comparação com baseline e predições por amostra
+- **Experimentação:** ablação automatizada de rank do LoRA, com gráficos e artefatos JSON
+- **Demo de deploy:** app Gradio local carregando o adaptador treinado
+- **Higiene de engenharia:** dataclasses de configuração tipadas, testes, lint, CI e Dockerfile
+
+---
+
+## 🏗️ Arquitetura
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    T5-Small (60M params)                     │
 │                                                             │
 │  ┌──────────┐    ┌──────────┐    ┌──────────┐              │
-│  │ Encoder  │───▶│ Decoder  │───▶│  LM Head │──▶ Summary   │
-│  │ (frozen) │    │ (frozen) │    │ (frozen) │              │
+│  │ Encoder  │───▶│ Decoder  │───▶│  LM Head │──▶ Resumo    │
+│  │(congel.) │    │(congel.) │    │(congel.) │              │
 │  └────┬─────┘    └────┬─────┘    └──────────┘              │
 │       │               │                                     │
 │  ┌────▼─────┐    ┌────▼─────┐                              │
 │  │ LoRA Δq  │    │ LoRA Δq  │   r=4, α=16                 │
-│  │ LoRA Δv  │    │ LoRA Δv  │   ~147K trainable params     │
+│  │ LoRA Δv  │    │ LoRA Δv  │   ~147K params treináveis    │
 │  └──────────┘    └──────────┘                              │
 │                                                             │
-│  W' = W_frozen + (α/√r) · B·A    ← rsLoRA scaling         │
+│  W' = W_congelado + (α/√r) · B·A   ← escalonamento rsLoRA  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Início rápido
 
-### Prerequisites
+### Pré-requisitos
 
 - Python 3.10+
-- macOS (MPS), Linux (CUDA), or CPU
+- macOS (MPS), Linux (CUDA) ou CPU
 
-### Installation
+### Instalação
 
 ```bash
-# Clone the repository
+# Clone o repositório
 git clone https://github.com/lucianoon/lora-tweetsumm.git
 cd lora-tweetsumm
 
-# Create virtual environment
+# Crie o ambiente virtual
 python -m venv .venv
 source .venv/bin/activate
 
-# Install dependencies
+# Instale as dependências
 pip install -e .
 
-# (Optional) Install Gradio for the demo UI
+# (Opcional) Instale o Gradio para a interface de demo
 pip install -e ".[demo]"
 ```
 
-### Train
+### Treinar
 
 ```bash
-# Run with default configuration (300 samples, 3 epochs, ~1 min on M4)
+# Rodar com a configuração padrão (300 amostras, 3 épocas, ~1 min no M4)
 python -m scripts.train
 
-# Use a custom config
+# Usar uma configuração customizada
 python -m scripts.train --config configs/default.yaml
 
-# Train and merge adapters into base model
+# Treinar e mesclar os adaptadores no modelo base
 python -m scripts.train --merge
 ```
 
-### Evaluate
+### Avaliar
 
 ```bash
-# Compute ROUGE scores with the latest checkpoint under training.output_dir
+# Calcular ROUGE com o checkpoint mais recente em training.output_dir
 python -m scripts.evaluate
 
-# Evaluate a specific trained adapter checkpoint
+# Avaliar um checkpoint específico do adaptador treinado
 python -m scripts.evaluate --checkpoint checkpoints/t5-lora-tweetsumm/checkpoint-225
 
-# Compare fine-tuned model against base T5 (no LoRA)
+# Comparar o modelo com fine-tuning contra o T5 base (sem LoRA)
 python -m scripts.evaluate --baseline
 ```
 
 ### Demo
 
 ```bash
-# Launch interactive Gradio UI
+# Abrir a interface interativa do Gradio
 python -m scripts.demo
 
-# Launch with a specific trained adapter checkpoint
+# Abrir com um checkpoint específico do adaptador treinado
 python -m scripts.demo --checkpoint checkpoints/t5-lora-tweetsumm/checkpoint-225
 
-# Launch even if no checkpoint exists (clearly marked as untrained in the UI)
+# Abrir mesmo sem checkpoint (a interface marca claramente como não treinado)
 python -m scripts.demo --allow-untrained
 
-# Create a public shareable link (72h)
+# Criar um link público compartilhável (72h)
 python -m scripts.demo --share
 ```
 
-The demo defaults are optimized for local responsiveness: translation is off,
-`num_beams=1`, and `max_new_tokens=48`. Enable PT↔EN translation only when
-needed, because it loads additional translation models.
+Os padrões da demo são otimizados para responsividade local: tradução
+desligada, `num_beams=1` e `max_new_tokens=48`. Ative a tradução PT↔EN apenas
+quando precisar, porque ela carrega modelos de tradução adicionais.
 
-### 🌐 Live demo — runs in your browser
+### 🌐 Demo ao vivo — roda no seu navegador
 
-**Try it now: [huggingface.co/spaces/lucianoon/lora-tweetsumm-demo](https://huggingface.co/spaces/lucianoon/lora-tweetsumm-demo)**
+**Teste agora: [huggingface.co/spaces/lucianoon/lora-tweetsumm-demo](https://huggingface.co/spaces/lucianoon/lora-tweetsumm-demo)**
 
-The hosted demo runs the model **entirely in the visitor's browser** via
-[Transformers.js](https://huggingface.co/docs/transformers.js): the LoRA
-adapter is merged into T5-Small, exported to ONNX and quantized to INT8
-(~90 MB one-time download, then cached). No server, no API keys — the text
-never leaves the page. Source in [`space-static/`](space-static/); ONNX
-weights at
+A demo hospedada roda o modelo **inteiramente no navegador do visitante** via
+[Transformers.js](https://huggingface.co/docs/transformers.js): o adaptador
+LoRA é mesclado no T5-Small, exportado para ONNX e quantizado em INT8
+(~90 MB de download uma única vez, depois fica em cache). Sem servidor, sem
+chave de API — o texto nunca sai da página. Código-fonte em
+[`space-static/`](space-static/); pesos ONNX em
 [`lucianoon/t5-small-lora-tweetsumm-onnx`](https://huggingface.co/lucianoon/t5-small-lora-tweetsumm-onnx).
 
-The [`space/`](space/) folder also contains a server-side Gradio build
-(loads the adapter from
+A pasta [`space/`](space/) também contém uma build Gradio server-side (carrega
+o adaptador de
 [`lucianoon/t5-small-lora-tweetsumm`](https://huggingface.co/lucianoon/t5-small-lora-tweetsumm))
-— note that Gradio Spaces now require a HF PRO subscription to host; see
-[space/DEPLOY.md](space/DEPLOY.md).
+— vale notar que Spaces com Gradio hoje exigem assinatura HF PRO para hospedar;
+veja [space/DEPLOY.md](space/DEPLOY.md).
 
 ---
 
-## 📁 Project Structure
+## 📁 Estrutura do projeto
 
 ```
 lora-tweetsumm/
-├── README.md                 # This file
-├── pyproject.toml            # Dependencies & project metadata (PEP 621)
-├── Dockerfile                # Container for reproducible runs
-├── LICENSE                   # MIT License
+├── README.md                 # Este arquivo
+├── pyproject.toml            # Dependências e metadados do projeto (PEP 621)
+├── Dockerfile                # Container para execuções reprodutíveis
+├── LICENSE                   # Licença MIT
 │
 ├── configs/
-│   ├── default.yaml          # Full training config (r=4, 300 samples)
-│   ├── fast.yaml             # Quick iteration (100 samples, 1 epoch)
-│   └── t5-base.yaml          # T5-Base for higher quality experiments
+│   ├── default.yaml          # Config completa de treino (r=4, 300 amostras)
+│   ├── fast.yaml             # Iteração rápida (100 amostras, 1 época)
+│   └── t5-base.yaml          # T5-Base para experimentos de maior qualidade
 │
 ├── src/
-│   ├── __init__.py           # Package metadata
-│   ├── config.py             # YAML-based configuration dataclasses
-│   ├── data.py               # Dataset loading & tokenization
-│   ├── model.py              # T5 + LoRA model construction & stats
-│   ├── train.py              # Seq2SeqTrainer setup & execution (with timing)
-│   └── inference.py          # Summary generation utilities
+│   ├── __init__.py           # Metadados do pacote
+│   ├── config.py             # Dataclasses de configuração baseadas em YAML
+│   ├── data.py               # Carregamento e tokenização do dataset
+│   ├── model.py              # Construção do T5 + LoRA e estatísticas
+│   ├── train.py              # Setup e execução do Seq2SeqTrainer (com timing)
+│   └── inference.py          # Utilitários de geração de resumos
 │
 ├── scripts/
-│   ├── train.py              # Training entrypoint
-│   ├── evaluate.py           # ROUGE evaluation with baseline comparison
-│   ├── experiments.py        # Rank ablation experiments & visualization
-│   └── demo.py               # Gradio interactive demo
+│   ├── train.py              # Entrypoint de treino
+│   ├── evaluate.py           # Avaliação ROUGE com comparação de baseline
+│   ├── experiments.py        # Experimentos de ablação de rank e visualização
+│   └── demo.py               # Demo interativa em Gradio
 │
-├── space/                    # Gradio Space build (requires HF PRO — see DEPLOY.md)
-├── space-static/             # Static Space: in-browser demo via Transformers.js (live)
+├── space/                    # Build do Space em Gradio (exige HF PRO — veja DEPLOY.md)
+├── space-static/             # Space estático: demo no navegador via Transformers.js (no ar)
 │
-├── tests/                    # Unit & integration test suite
-│   ├── conftest.py           # Shared fixtures
-│   ├── test_config.py        # Configuration tests
-│   ├── test_data.py          # Data pipeline tests
-│   ├── test_model.py         # Model construction tests (slow)
-│   └── test_inference.py     # Inference tests (slow)
+├── tests/                    # Suíte de testes unitários e de integração
+│   ├── conftest.py           # Fixtures compartilhadas
+│   ├── test_config.py        # Testes de configuração
+│   ├── test_data.py          # Testes do pipeline de dados
+│   ├── test_model.py         # Testes de construção do modelo (lentos)
+│   └── test_inference.py     # Testes de inferência (lentos)
 │
 ├── notebooks/
-│   └── exploration.ipynb     # Narrative walkthrough & analysis
+│   └── exploration.ipynb     # Passo a passo narrativo e análise
 │
-└── results/                  # Saved evaluation metrics & plots
+└── results/                  # Métricas e gráficos de avaliação salvos
 ```
 
 ---
 
-## ⚙️ Configuration
+## ⚙️ Configuração
 
-All hyperparameters are centralized in YAML config files:
+Todos os hiperparâmetros ficam centralizados em arquivos YAML:
 
-| Parameter | Default | Fast | Description |
+| Parâmetro | Padrão | Fast | Descrição |
 |-----------|---------|------|-------------|
-| `model_id` | `google-t5/t5-small` | same | Base model (swap to `t5-base` for quality) |
-| `n_train` | `300` | `100` | Training samples (max 879) |
-| `lora.r` | `4` | `8` | LoRA rank (4 is optimal per ablation) |
-| `lora.alpha` | `16` | `16` | LoRA scaling factor |
-| `lora.use_rslora` | `true` | `true` | Rank-stabilized scaling (α/√r) |
-| `training.epochs` | `3` | `1` | Number of training epochs |
-| `training.learning_rate` | `1e-3` | `1e-3` | Higher lr typical for LoRA |
+| `model_id` | `google-t5/t5-small` | igual | Modelo base (troque por `t5-base` para mais qualidade) |
+| `n_train` | `300` | `100` | Amostras de treino (máx. 879) |
+| `lora.r` | `4` | `8` | Rank do LoRA (4 é o ótimo segundo a ablação) |
+| `lora.alpha` | `16` | `16` | Fator de escala do LoRA |
+| `lora.use_rslora` | `true` | `true` | Escalonamento estabilizado por rank (α/√r) |
+| `training.epochs` | `3` | `1` | Número de épocas de treino |
+| `training.learning_rate` | `1e-3` | `1e-3` | Learning rate mais alto é típico em LoRA |
 
-Create a new YAML file to experiment with different configurations without modifying code.
+Crie um novo arquivo YAML para experimentar configurações diferentes sem mexer no código.
 
-### Hardware Tested
+### Hardware testado
 
-| Hardware | Memory | Device | Config | Training Time |
+| Hardware | Memória | Device | Config | Tempo de treino |
 |----------|--------|--------|--------|---------------|
-| MacBook Air M4 | 16 GB unified | MPS | T5-small, r=4, 300 samples, 3 epochs | ~53s |
+| MacBook Air M4 | 16 GB unificada | MPS | T5-small, r=4, 300 amostras, 3 épocas | ~53s |
 
-For this hardware class, `google-t5/t5-base` is a practical next step.
-`flan-t5-large` may run with LoRA, but requires smaller batches and longer
-iteration time.
+Para essa classe de hardware, `google-t5/t5-base` é um próximo passo prático.
+`flan-t5-large` pode rodar com LoRA, mas exige batches menores e tempo de
+iteração maior.
 
 ---
 
-## 📊 Results
+## 📊 Resultados
 
-### Rank Ablation (T5-Small, 300 samples, 3 epochs)
+### Ablação de rank (T5-Small, 300 amostras, 3 épocas)
 
-| Rank | Trainable Params | % of Total | ROUGE-1 | ROUGE-2 | ROUGE-L | Train Time |
+| Rank | Params treináveis | % do total | ROUGE-1 | ROUGE-2 | ROUGE-L | Tempo de treino |
 |------|-----------------|------------|---------|---------|---------|------------|
-| **r=4** 🏆 | **147,456** | **0.24%** | **0.4188** | **0.1922** | **0.3570** | **53.1s** |
-| r=8 | 294,912 | 0.48% | 0.3898 | 0.1687 | 0.3347 | 53.2s |
-| r=16 | 589,824 | 0.97% | 0.3887 | 0.1656 | 0.3292 | 52.2s |
-| r=32 | 1,179,648 | 1.91% | 0.3889 | 0.1644 | 0.3286 | 56.6s |
+| **r=4** 🏆 | **147.456** | **0,24%** | **0,4188** | **0,1922** | **0,3570** | **53,1s** |
+| r=8 | 294.912 | 0,48% | 0,3898 | 0,1687 | 0,3347 | 53,2s |
+| r=16 | 589.824 | 0,97% | 0,3887 | 0,1656 | 0,3292 | 52,2s |
+| r=32 | 1.179.648 | 1,91% | 0,3889 | 0,1644 | 0,3286 | 56,6s |
 
-> **Key insight:** r=4 achieves the best ROUGE scores with the fewest trainable parameters (0.24%).
-> Higher ranks show diminishing returns — suggesting the task's underlying structure is well-captured by a rank-4 decomposition.
+> **Conclusão principal:** r=4 obtém os melhores scores ROUGE com o menor número de parâmetros treináveis (0,24%).
+> Ranks maiores mostram retornos decrescentes — o que sugere que a estrutura subjacente da tarefa é bem capturada por uma decomposição de rank 4.
 >
-> Model: `google-t5/t5-small` · α=16 · rsLoRA · 3 epochs · lr=1e-3 · Apple M4 (MPS)
+> Modelo: `google-t5/t5-small` · α=16 · rsLoRA · 3 épocas · lr=1e-3 · Apple M4 (MPS)
 
 <p align="center">
-  <img src="results/rank_ablation.png" alt="Rank Ablation Chart" width="700">
+  <img src="results/rank_ablation.png" alt="Gráfico da ablação de rank" width="700">
 </p>
 
 ---
 
-## 🧪 Experiments
+## 🧪 Experimentos
 
-### Rank Ablation
+### Ablação de rank
 
-Compare the effect of different LoRA ranks on summarization quality:
+Compare o efeito de diferentes ranks do LoRA na qualidade da sumarização:
 
 ```bash
-# Full ablation: r=4, 8, 16, 32 (default)
+# Ablação completa: r=4, 8, 16, 32 (padrão)
 python -m scripts.experiments
 
-# Custom ranks
+# Ranks customizados
 python -m scripts.experiments --ranks 4 8 16
 
-# Fast mode (100 samples, 1 epoch) for quick iteration
+# Modo rápido (100 amostras, 1 época) para iteração ágil
 python -m scripts.experiments --fast
 
-# Combine: specific ranks + fast config
+# Combinado: ranks específicos + config rápida
 python -m scripts.experiments --ranks 4 8 16 32 --fast
 ```
 
-The experiment script automatically:
-1. Trains a separate model for each rank
-2. Evaluates ROUGE scores on the test set
-3. Collects parameter counts and training time
-4. Saves each rank's checkpoints under `training.output_dir/rank-<r>/`
-5. Saves results to `results/rank_ablation_<timestamp>.json`
-6. Generates a comparison chart at `results/rank_ablation.png`
+O script de experimentos automaticamente:
+1. Treina um modelo separado para cada rank
+2. Avalia os scores ROUGE no conjunto de teste
+3. Coleta contagem de parâmetros e tempo de treino
+4. Salva os checkpoints de cada rank em `training.output_dir/rank-<r>/`
+5. Salva os resultados em `results/rank_ablation_<timestamp>.json`
+6. Gera um gráfico comparativo em `results/rank_ablation.png`
 
-**Example output:**
+**Exemplo de saída:**
 
 ```
 ══════════════════════════════════════════════════════════════════════════════════
@@ -297,78 +299,79 @@ The experiment script automatically:
 
 ---
 
-## 🔬 Technical Details
+## 🔬 Detalhes técnicos
 
-### Why LoRA?
+### Por que LoRA?
 
-Full fine-tuning updates all model parameters, requiring significant memory and compute. LoRA ([Hu et al., 2021](https://arxiv.org/abs/2106.09685)) decomposes weight updates into low-rank matrices:
+Fine-tuning completo atualiza todos os parâmetros do modelo, exigindo bastante memória e compute. O LoRA ([Hu et al., 2021](https://arxiv.org/abs/2106.09685)) decompõe as atualizações de peso em matrizes de baixo rank:
 
 $$W' = W + \Delta W = W + B \cdot A$$
 
-where $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times d}$, with rank $r \ll d$.
+onde $B \in \mathbb{R}^{d \times r}$ e $A \in \mathbb{R}^{r \times d}$, com rank $r \ll d$.
 
-### rsLoRA Scaling
+### Escalonamento rsLoRA
 
-We use rank-stabilized LoRA ([Kalajdzievski, 2023](https://arxiv.org/abs/2312.03732)) which scales the adapter output by $\alpha / \sqrt{r}$ instead of $\alpha / r$, providing more stable training dynamics across different rank values.
+Usamos LoRA estabilizado por rank ([Kalajdzievski, 2023](https://arxiv.org/abs/2312.03732)), que escala a saída do adaptador por $\alpha / \sqrt{r}$ em vez de $\alpha / r$, oferecendo dinâmica de treino mais estável entre diferentes valores de rank.
 
-### Target Modules
+### Módulos alvo
 
-LoRA adapters are applied to the **query (q)** and **value (v)** projections of the multi-head attention layers in both the encoder and decoder, following the original LoRA paper's recommendation.
+Os adaptadores LoRA são aplicados às projeções de **query (q)** e **value (v)** das camadas de atenção multi-head, tanto no encoder quanto no decoder, seguindo a recomendação do paper original do LoRA.
 
 ---
 
-## 🧪 Testing
+## 🧪 Testes
 
 ```bash
-# Run fast tests (no model downloads, ~2 seconds)
+# Rodar os testes rápidos (sem download de modelo, ~2 segundos)
 pytest -m "not slow"
 
-# Run all tests including model integration tests (~30 seconds)
+# Rodar todos os testes, incluindo os de integração com modelo (~30 segundos)
 pytest
 
-# Run with coverage
+# Rodar com cobertura
 pytest --cov=src --cov-report=html
 ```
 
-Tests are organized by module: `test_config.py` (pure logic), `test_data.py` (mock datasets), `test_model.py` and `test_inference.py` (marked `@slow`, load real T5-small).
+Os testes são organizados por módulo: `test_config.py` (lógica pura), `test_data.py` (datasets mockados), `test_model.py` e `test_inference.py` (marcados como `@slow`, carregam o T5-small de verdade).
 
 ---
 
-## ⚠️ Limitations
+## ⚠️ Limitações
 
-- The main experiments use a small subset of TweetSumm (`n_train=300`) for fast
-  local iteration, not maximum model quality.
-- ROUGE is useful for quick comparison, but it does not fully capture factuality,
-  actionability, or customer-service usefulness.
-- Portuguese demo support is translation-based. The summarizer itself is trained
-  on English-style TweetSumm data.
-- Checkpoints and generated result files are intentionally gitignored. Re-run
-  training or experiments to recreate them locally.
-- Apple MPS support is improving quickly across PyTorch and Transformers; exact
-  runtime can vary by package version.
+- Os experimentos principais usam um subconjunto pequeno do TweetSumm
+  (`n_train=300`) para iteração local rápida, não para qualidade máxima do
+  modelo.
+- ROUGE é útil para comparação rápida, mas não captura por completo
+  factualidade, acionabilidade ou utilidade real em atendimento ao cliente.
+- O suporte a português na demo é baseado em tradução. O sumarizador em si é
+  treinado em dados do TweetSumm, em inglês.
+- Checkpoints e arquivos de resultado gerados estão intencionalmente no
+  gitignore. Rode treino ou experimentos de novo para recriá-los localmente.
+- O suporte a Apple MPS evolui rápido no PyTorch e no Transformers; o tempo de
+  execução exato varia conforme a versão dos pacotes.
 
 ---
 
 ## 🐳 Docker
 
 ```bash
-# Build the image
+# Construir a imagem
 docker build -t lora-tweetsumm .
 
-# Run the Gradio demo.
-# In a clean clone, this starts with an untrained adapter unless you mount checkpoints.
+# Rodar a demo Gradio.
+# Num clone limpo, isso inicia com adaptador não treinado, a menos que você monte checkpoints.
 docker run -p 7860:7860 lora-tweetsumm
 
-# Run the demo with local trained checkpoints mounted into the container
+# Rodar a demo com checkpoints treinados locais montados no container
 docker run -p 7860:7860 \
   -v "$PWD/checkpoints:/app/checkpoints" \
   lora-tweetsumm \
   python -m scripts.demo --checkpoint checkpoints/t5-lora-tweetsumm/checkpoint-225
 
-# Run training instead
+# Rodar o treino em vez da demo
 docker run lora-tweetsumm python -m scripts.train
 
-# Run experiments
+# Rodar os experimentos
 docker run lora-tweetsumm python -m scripts.experiments --fast
 ```
 
@@ -376,26 +379,28 @@ docker run lora-tweetsumm python -m scripts.experiments --fast
 
 ## 📓 Notebooks
 
-The [`notebooks/exploration.ipynb`](notebooks/exploration.ipynb) notebook provides a narrative walkthrough of the entire project:
+O notebook [`notebooks/exploration.ipynb`](notebooks/exploration.ipynb) traz um passo a passo narrativo do projeto inteiro:
 
-1. **Dataset exploration** — length distributions, sample dialogues
-2. **LoRA explained** — parameter comparison visualizations
-3. **Training** — live training with before/after comparison
-4. **Evaluation** — ROUGE scores and example predictions
-5. **Ablation analysis** — interactive charts from experiment results
+1. **Exploração do dataset** — distribuições de comprimento, diálogos de exemplo
+2. **LoRA explicado** — visualizações comparando contagem de parâmetros
+3. **Treino** — treino ao vivo com comparação antes/depois
+4. **Avaliação** — scores ROUGE e exemplos de predições
+5. **Análise de ablação** — gráficos interativos a partir dos resultados dos experimentos
+
+O conteúdo do notebook está em inglês.
 
 ---
 
-## 📚 References
+## 📚 Referências
 
 1. **LoRA**: Hu, E. J., et al. (2021). [LoRA: Low-Rank Adaptation of Large Language Models](https://arxiv.org/abs/2106.09685). *arXiv:2106.09685*.
 2. **rsLoRA**: Kalajdzievski, D. (2023). [A Rank Stabilization Scaling Factor for Fine-Tuning with LoRA](https://arxiv.org/abs/2312.03732). *arXiv:2312.03732*.
 3. **T5**: Raffel, C., et al. (2020). [Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer](https://arxiv.org/abs/1910.10683). *JMLR*.
 4. **PEFT**: HuggingFace. [Parameter-Efficient Fine-Tuning](https://huggingface.co/docs/peft).
-5. **TweetSumm**: Dataset for customer service dialogue summarization.
+5. **TweetSumm**: dataset para sumarização de diálogos de atendimento ao cliente.
 
 ---
 
-## 📄 License
+## 📄 Licença
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+Este projeto está licenciado sob a Licença MIT — veja o arquivo [LICENSE](LICENSE) para detalhes.
