@@ -41,6 +41,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "ruff>=0.4",
+    "mypy>=1.11",
+    "types-PyYAML",
+    "types-tqdm",
     "pytest>=8.0",
     "ipykernel>=6.0",
 ]
@@ -76,3 +79,20 @@ markers = [
     "slow: tests that download models or datasets (deselect with '-m \"not slow\"')",
 ]
 addopts = "-v --tb=short"
+
+[tool.mypy]
+# O pacote suporta 3.10+ (ver a matriz do CI), mas os stubs do numpy usam
+# sintaxe de 3.12; o mypy roda com a versão mais nova e o ruff, com
+# target-version = "py310", é quem guarda a compatibilidade para trás.
+python_version = "3.12"
+files = ["src", "scripts"]
+# scripts/ é um namespace package (sem __init__.py). Sem isto o mypy mapeia
+# scripts/evaluate.py como módulo top-level `evaluate`, colidindo com a
+# biblioteca `evaluate` que esse mesmo arquivo importa.
+mypy_path = "."
+explicit_package_bases = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+check_untyped_defs = true

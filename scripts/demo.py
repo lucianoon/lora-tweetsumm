@@ -14,6 +14,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
@@ -23,7 +24,7 @@ import gradio as gr
 from src.config import load_config
 from src.data import load_tokenizer
 from src.inference import summarize
-from src.model import build_model, load_trained_model
+from src.model import SummarizationModel, build_model, load_trained_model
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,7 @@ def create_app(
     config = load_config(config_path)
     tokenizer = load_tokenizer(config)
     model_notice = ""
+    model: SummarizationModel
     try:
         model = load_trained_model(config, checkpoint)
     except FileNotFoundError:
@@ -108,8 +110,8 @@ def create_app(
             "This demo is running with an untrained LoRA adapter.</div>"
         )
 
-    translator_pt_en = []
-    translator_en_pt = []
+    translator_pt_en: list[tuple[Any, Any]] = []
+    translator_en_pt: list[tuple[Any, Any]] = []
 
     def get_pt_en():
         if not translator_pt_en:

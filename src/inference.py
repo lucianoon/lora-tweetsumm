@@ -11,15 +11,16 @@ import logging
 from typing import Any, Dict
 
 import torch
-from transformers import PreTrainedModel, PreTrainedTokenizerBase
+from transformers import PreTrainedTokenizerBase
 
 from src.config import Config
+from src.model import SummarizationModel
 
 logger = logging.getLogger(__name__)
 
 
 def summarize(
-    model: PreTrainedModel,
+    model: SummarizationModel,
     tokenizer: PreTrainedTokenizerBase,
     dialogue: str,
     config: Config,
@@ -44,18 +45,23 @@ def summarize(
     ).to(model.device)
 
     with torch.inference_mode():
-        outputs = model.generate(
+        # PeftModel expõe generate() via nn.Module.__getattr__, que os stubs
+        # tipam como Tensor | Module — daí o ignore.
+        outputs = model.generate(  # type: ignore[operator]
             **inputs,
             max_new_tokens=config.inference.max_new_tokens,
             num_beams=config.inference.num_beams,
         )
 
+    # decode() é tipado como str | list[str]; com uma única sequência
+    # (outputs[0]) o retorno é sempre str.
     summary = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    assert isinstance(summary, str)
     return summary
 
 
 def compare_before_after(
-    model: PreTrainedModel,
+    model: SummarizationModel,
     tokenizer: PreTrainedTokenizerBase,
     sample: Dict[str, Any],
     dialogue_column: str,

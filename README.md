@@ -330,6 +330,11 @@ pytest
 
 # Rodar com cobertura
 pytest --cov=src --cov-report=html
+
+# Lint e checagem de tipos (os mesmos gates do CI)
+ruff check src/ scripts/ tests/
+ruff format --check src/ scripts/ tests/
+mypy
 ```
 
 Os testes são organizados por módulo: `test_config.py` (lógica pura), `test_data.py` (datasets mockados), `test_model.py` e `test_inference.py` (marcados como `@slow`, carregam o T5-small de verdade).
