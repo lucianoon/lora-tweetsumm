@@ -330,6 +330,11 @@ pytest
 
 # Run with coverage
 pytest --cov=src --cov-report=html
+
+# Lint and type check (the same gates CI enforces)
+ruff check src/ scripts/ tests/
+ruff format --check src/ scripts/ tests/
+mypy
 ```
 
 Tests are organized by module: `test_config.py` (pure logic), `test_data.py` (mock datasets), `test_model.py` and `test_inference.py` (marked `@slow`, load real T5-small).

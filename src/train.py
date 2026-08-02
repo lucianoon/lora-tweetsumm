@@ -12,19 +12,19 @@ import time
 
 from transformers import (
     DataCollatorForSeq2Seq,
-    PreTrainedModel,
     PreTrainedTokenizerBase,
     Seq2SeqTrainer,
     Seq2SeqTrainingArguments,
 )
 
 from src.config import Config
+from src.model import SummarizationModel
 
 logger = logging.getLogger(__name__)
 
 
 def create_trainer(
-    model: PreTrainedModel,
+    model: SummarizationModel,
     tokenizer: PreTrainedTokenizerBase,
     train_dataset,
     eval_dataset,

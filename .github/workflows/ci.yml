@@ -53,5 +53,12 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
 
+      # mypy precisa dos pacotes reais instalados (torch, transformers, peft)
+      # para checar as fronteiras; o job de lint não os instala, então roda
+      # aqui, uma vez só.
+      - name: Type check
+        if: matrix.python-version == '3.12'
+        run: mypy
+
       - name: Run fast tests
         run: pytest -m "not slow" -v --tb=short

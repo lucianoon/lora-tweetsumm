@@ -11,15 +11,19 @@ import json
 import logging
 from pathlib import Path
 
-from peft import LoraConfig, PeftModel, TaskType, get_peft_model
+from peft import LoraConfig, PeftMixedModel, PeftModel, TaskType, get_peft_model
 from transformers import AutoModelForSeq2SeqLM, PreTrainedModel
 
 from src.config import Config
 
+# Os utilitários de inferência aceitam tanto o T5 base (para comparação
+# antes/depois) quanto o modelo embrulhado pelo PEFT.
+SummarizationModel = PreTrainedModel | PeftModel | PeftMixedModel
+
 logger = logging.getLogger(__name__)
 
 
-def build_model(config: Config) -> PreTrainedModel:
+def build_model(config: Config) -> PeftModel | PeftMixedModel:
     """Build a T5 model with LoRA adapters applied.
 
     Loads the base model, configures LoRA with rank-stabilized scaling
@@ -115,7 +119,7 @@ def read_adapter_rank(checkpoint: str | Path) -> int | None:
     return rank if isinstance(rank, int) else None
 
 
-def load_trained_model(config: Config, checkpoint: str | Path | None = None) -> PreTrainedModel:
+def load_trained_model(config: Config, checkpoint: str | Path | None = None) -> PeftModel:
     """Load a base T5 model with trained LoRA adapter weights.
 
     Args:
@@ -154,7 +158,7 @@ def load_trained_model(config: Config, checkpoint: str | Path | None = None) -> 
     return model
 
 
-def get_model_stats(model: PreTrainedModel) -> dict:
+def get_model_stats(model: PeftModel | PeftMixedModel) -> dict:
     """Collect model parameter statistics.
 
     Args:
@@ -177,7 +181,7 @@ def get_model_stats(model: PreTrainedModel) -> dict:
     }
 
 
-def merge_and_save(model: PreTrainedModel, output_dir: str | Path) -> Path:
+def merge_and_save(model: PeftModel | PeftMixedModel, output_dir: str | Path) -> Path:
     """Merge LoRA adapters into the base model and save.
 
     Fusing the adapters removes any inference overhead — the resulting
