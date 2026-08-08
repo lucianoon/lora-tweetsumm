@@ -47,6 +47,7 @@ def create_trainer(
         num_train_epochs=config.training.epochs,
         per_device_train_batch_size=config.training.batch_size,
         learning_rate=config.training.learning_rate,
+        warmup_steps=config.training.warmup_steps,
         predict_with_generate=True,
         logging_steps=config.training.logging_steps,
         eval_strategy=config.training.eval_strategy,
@@ -54,7 +55,8 @@ def create_trainer(
         bf16=(config.device == "cuda" and config.training.bf16_on_cuda),
         save_strategy="epoch",
         save_total_limit=2,
-        load_best_model_at_end=False,
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
         remove_unused_columns=True,
     )
 
