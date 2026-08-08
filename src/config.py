@@ -38,6 +38,7 @@ class TrainingParams:
     epochs: int = 3
     batch_size: int = 4
     learning_rate: float = 1e-3
+    warmup_steps: float = 0.06
     logging_steps: int = 20
     eval_strategy: str = "epoch"
     bf16_on_cuda: bool = True

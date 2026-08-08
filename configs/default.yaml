@@ -29,6 +29,7 @@ training:
   epochs: 3
   batch_size: 4
   learning_rate: 1.0e-3              # LoRA benefits from higher lr than full fine-tune
+  warmup_steps: 0.06                 # Fraction (<1) of total steps to warm up the high lr
   logging_steps: 20
   eval_strategy: "epoch"
   bf16_on_cuda: true                 # Enable bf16 only on CUDA devices
