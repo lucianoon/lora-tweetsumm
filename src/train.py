@@ -23,6 +23,37 @@ from src.model import SummarizationModel
 logger = logging.getLogger(__name__)
 
 
+def build_training_args(config: Config) -> Seq2SeqTrainingArguments:
+    """Map a :class:`Config` to :class:`Seq2SeqTrainingArguments`.
+
+    Kept as a pure function (no model, no I/O) so the config-to-args mapping
+    can be tested in isolation.
+
+    Args:
+        config: Pipeline configuration.
+
+    Returns:
+        The training arguments derived from ``config``.
+    """
+    return Seq2SeqTrainingArguments(
+        output_dir=config.training.output_dir,
+        num_train_epochs=config.training.epochs,
+        per_device_train_batch_size=config.training.batch_size,
+        learning_rate=config.training.learning_rate,
+        warmup_steps=config.training.warmup_steps,
+        predict_with_generate=True,
+        logging_steps=config.training.logging_steps,
+        eval_strategy=config.training.eval_strategy,
+        report_to="none",
+        bf16=(config.device == "cuda" and config.training.bf16_on_cuda),
+        save_strategy="epoch",
+        save_total_limit=2,
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
+        remove_unused_columns=True,
+    )
+
+
 def create_trainer(
     model: SummarizationModel,
     tokenizer: PreTrainedTokenizerBase,
@@ -42,23 +73,7 @@ def create_trainer(
     Returns:
         A ready-to-train :class:`Seq2SeqTrainer`.
     """
-    training_args = Seq2SeqTrainingArguments(
-        output_dir=config.training.output_dir,
-        num_train_epochs=config.training.epochs,
-        per_device_train_batch_size=config.training.batch_size,
-        learning_rate=config.training.learning_rate,
-        warmup_steps=config.training.warmup_steps,
-        predict_with_generate=True,
-        logging_steps=config.training.logging_steps,
-        eval_strategy=config.training.eval_strategy,
-        report_to="none",
-        bf16=(config.device == "cuda" and config.training.bf16_on_cuda),
-        save_strategy="epoch",
-        save_total_limit=2,
-        load_best_model_at_end=True,
-        metric_for_best_model="eval_loss",
-        remove_unused_columns=True,
-    )
+    training_args = build_training_args(config)
 
     data_collator = DataCollatorForSeq2Seq(
         tokenizer,
