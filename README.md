@@ -67,140 +67,46 @@ Este repositório está estruturado como um projeto de ML aplicado de ponta a po
 
 ## 🚀 Início rápido
 
-### Pré-requisitos
-
-- Python 3.10+
-- macOS (MPS), Linux (CUDA) ou CPU
-
-### Instalação
+Python 3.10+, em macOS (MPS), Linux (CUDA) ou CPU.
 
 ```bash
-# Clone o repositório
 git clone https://github.com/lucianoon/lora-tweetsumm.git
 cd lora-tweetsumm
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[demo]"        # sem [demo], não instala o Gradio
 
-# Crie o ambiente virtual
-python -m venv .venv
-source .venv/bin/activate
-
-# Instale as dependências
-pip install -e .
-
-# (Opcional) Instale o Gradio para a interface de demo
-pip install -e ".[demo]"
+python -m scripts.train         # treina: 300 amostras, 3 épocas, ~1 min num M4
+python -m scripts.evaluate      # ROUGE do checkpoint mais recente
+python -m scripts.demo          # interface Gradio
 ```
 
-### Treinar
-
-```bash
-# Rodar com a configuração padrão (300 amostras, 3 épocas, ~1 min no M4)
-python -m scripts.train
-
-# Usar uma configuração customizada
-python -m scripts.train --config configs/default.yaml
-
-# Treinar e mesclar os adaptadores no modelo base
-python -m scripts.train --merge
-```
-
-### Avaliar
-
-```bash
-# Calcular ROUGE com o checkpoint mais recente em training.output_dir
-python -m scripts.evaluate
-
-# Avaliar um checkpoint específico do adaptador treinado
-python -m scripts.evaluate --checkpoint checkpoints/t5-lora-tweetsumm/checkpoint-225
-
-# Comparar o modelo com fine-tuning contra o T5 base (sem LoRA)
-python -m scripts.evaluate --baseline
-```
-
-### Demo
-
-```bash
-# Abrir a interface interativa do Gradio
-python -m scripts.demo
-
-# Abrir com um checkpoint específico do adaptador treinado
-python -m scripts.demo --checkpoint checkpoints/t5-lora-tweetsumm/checkpoint-225
-
-# Abrir mesmo sem checkpoint (a interface marca claramente como não treinado)
-python -m scripts.demo --allow-untrained
-
-# Criar um link público compartilhável (72h)
-python -m scripts.demo --share
-```
-
-Os padrões da demo são otimizados para responsividade local: tradução
-desligada, `num_beams=1` e `max_new_tokens=48`. Ative a tradução PT↔EN apenas
-quando precisar, porque ela carrega modelos de tradução adicionais.
-
-### 🌐 Demo ao vivo — roda no seu navegador
-
-**Teste agora: [huggingface.co/spaces/lucianoon/lora-tweetsumm-demo](https://huggingface.co/spaces/lucianoon/lora-tweetsumm-demo)**
-
-A demo hospedada roda o modelo **inteiramente no navegador do visitante** via
-[Transformers.js](https://huggingface.co/docs/transformers.js): o adaptador
-LoRA é mesclado no T5-Small, exportado para ONNX e quantizado em INT8
-(~90 MB de download uma única vez, depois fica em cache). Sem servidor, sem
-chave de API — o texto nunca sai da página. Código-fonte em
-[`space-static/`](space-static/); pesos ONNX em
-[`lucianoon/t5-small-lora-tweetsumm-onnx`](https://huggingface.co/lucianoon/t5-small-lora-tweetsumm-onnx).
-
-A pasta [`space/`](space/) também contém uma build Gradio server-side (carrega
-o adaptador de
-[`lucianoon/t5-small-lora-tweetsumm`](https://huggingface.co/lucianoon/t5-small-lora-tweetsumm))
-— vale notar que Spaces com Gradio hoje exigem assinatura HF PRO para hospedar;
-veja [space/DEPLOY.md](space/DEPLOY.md).
-
----
+Cada script aceita `--help`. As variações mais usadas: `train --merge` mescla os
+adaptadores no modelo base, `evaluate --baseline` compara contra o T5 sem LoRA,
+`evaluate --checkpoint <path>` fixa um checkpoint, e `demo --allow-untrained`
+abre a interface sem checkpoint (marcando claramente como não treinado).
 
 ## 📁 Estrutura do projeto
 
+O que não é óbvio pelo navegador de arquivos:
+
 ```
-lora-tweetsumm/
-├── README.md                 # Este arquivo
-├── pyproject.toml            # Dependências e metadados do projeto (PEP 621)
-├── Dockerfile                # Container para execuções reprodutíveis
-├── LICENSE                   # Licença MIT
-│
-├── configs/
-│   ├── default.yaml          # Config completa de treino (r=4, 300 amostras)
-│   ├── fast.yaml             # Iteração rápida (100 amostras, 1 época)
-│   └── t5-base.yaml          # T5-Base para experimentos de maior qualidade
-│
-├── src/
-│   ├── __init__.py           # Metadados do pacote
-│   ├── config.py             # Dataclasses de configuração baseadas em YAML
-│   ├── data.py               # Carregamento e tokenização do dataset
-│   ├── model.py              # Construção do T5 + LoRA e estatísticas
-│   ├── train.py              # Setup e execução do Seq2SeqTrainer (com timing)
-│   └── inference.py          # Utilitários de geração de resumos
-│
-├── scripts/
-│   ├── train.py              # Entrypoint de treino
-│   ├── evaluate.py           # Avaliação ROUGE com comparação de baseline
-│   ├── experiments.py        # Experimentos de ablação de rank e visualização
-│   └── demo.py               # Demo interativa em Gradio
-│
-├── space/                    # Build do Space em Gradio (exige HF PRO — veja DEPLOY.md)
-├── space-static/             # Space estático: demo no navegador via Transformers.js (no ar)
-│
-├── tests/                    # Suíte de testes unitários e de integração
-│   ├── conftest.py           # Fixtures compartilhadas
-│   ├── test_config.py        # Testes de configuração
-│   ├── test_data.py          # Testes do pipeline de dados
-│   ├── test_model.py         # Testes de construção do modelo (lentos)
-│   └── test_inference.py     # Testes de inferência (lentos)
-│
-├── notebooks/
-│   └── exploration.ipynb     # Passo a passo narrativo e análise
-│
-└── results/                  # Métricas e gráficos de avaliação salvos
+configs/
+├── default.yaml       # treino completo (r=4, 300 amostras) — o padrão
+├── fast.yaml          # iteração rápida (100 amostras, 1 época)
+└── t5-base.yaml       # T5-Base, para experimentos de maior qualidade
+
+scripts/               # entrypoints
+├── train.py           # treino
+├── evaluate.py        # ROUGE, com comparação de baseline
+├── experiments.py     # ablação de rank e visualização
+└── demo.py            # demo Gradio
+
+space/                 # build do Space em Gradio (exige HF PRO)
+space-static/          # Space estático: roda no navegador via Transformers.js
 ```
 
----
+Deploy dos Spaces: [`space/DEPLOY.md`](space/DEPLOY.md). O código da biblioteca
+fica em `src/` (config, data, model, train, inference).
 
 ## ⚙️ Configuração
 

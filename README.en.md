@@ -67,140 +67,47 @@ This repository is structured as an end-to-end applied ML project:
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- Python 3.10+
-- macOS (MPS), Linux (CUDA), or CPU
-
-### Installation
+Python 3.10+, on macOS (MPS), Linux (CUDA) or CPU.
 
 ```bash
-# Clone the repository
 git clone https://github.com/lucianoon/lora-tweetsumm.git
 cd lora-tweetsumm
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[demo]"        # without [demo], Gradio is not installed
 
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -e .
-
-# (Optional) Install Gradio for the demo UI
-pip install -e ".[demo]"
+python -m scripts.train         # train: 300 samples, 3 epochs, ~1 min on an M4
+python -m scripts.evaluate      # ROUGE for the latest checkpoint
+python -m scripts.demo          # Gradio interface
 ```
 
-### Train
-
-```bash
-# Run with default configuration (300 samples, 3 epochs, ~1 min on M4)
-python -m scripts.train
-
-# Use a custom config
-python -m scripts.train --config configs/default.yaml
-
-# Train and merge adapters into base model
-python -m scripts.train --merge
-```
-
-### Evaluate
-
-```bash
-# Compute ROUGE scores with the latest checkpoint under training.output_dir
-python -m scripts.evaluate
-
-# Evaluate a specific trained adapter checkpoint
-python -m scripts.evaluate --checkpoint checkpoints/t5-lora-tweetsumm/checkpoint-225
-
-# Compare fine-tuned model against base T5 (no LoRA)
-python -m scripts.evaluate --baseline
-```
-
-### Demo
-
-```bash
-# Launch interactive Gradio UI
-python -m scripts.demo
-
-# Launch with a specific trained adapter checkpoint
-python -m scripts.demo --checkpoint checkpoints/t5-lora-tweetsumm/checkpoint-225
-
-# Launch even if no checkpoint exists (clearly marked as untrained in the UI)
-python -m scripts.demo --allow-untrained
-
-# Create a public shareable link (72h)
-python -m scripts.demo --share
-```
-
-The demo defaults are optimized for local responsiveness: translation is off,
-`num_beams=1`, and `max_new_tokens=48`. Enable PT↔EN translation only when
-needed, because it loads additional translation models.
-
-### 🌐 Live demo — runs in your browser
-
-**Try it now: [huggingface.co/spaces/lucianoon/lora-tweetsumm-demo](https://huggingface.co/spaces/lucianoon/lora-tweetsumm-demo)**
-
-The hosted demo runs the model **entirely in the visitor's browser** via
-[Transformers.js](https://huggingface.co/docs/transformers.js): the LoRA
-adapter is merged into T5-Small, exported to ONNX and quantized to INT8
-(~90 MB one-time download, then cached). No server, no API keys — the text
-never leaves the page. Source in [`space-static/`](space-static/); ONNX
-weights at
-[`lucianoon/t5-small-lora-tweetsumm-onnx`](https://huggingface.co/lucianoon/t5-small-lora-tweetsumm-onnx).
-
-The [`space/`](space/) folder also contains a server-side Gradio build
-(loads the adapter from
-[`lucianoon/t5-small-lora-tweetsumm`](https://huggingface.co/lucianoon/t5-small-lora-tweetsumm))
-— note that Gradio Spaces now require a HF PRO subscription to host; see
-[space/DEPLOY.md](space/DEPLOY.md).
-
----
+Every script takes `--help`. The variants you are most likely to want:
+`train --merge` merges the adapters into the base model, `evaluate --baseline`
+compares against T5 without LoRA, `evaluate --checkpoint <path>` pins a
+checkpoint, and `demo --allow-untrained` opens the interface with no checkpoint
+(clearly labeled as untrained).
 
 ## 📁 Project Structure
 
+What the file browser does not tell you:
+
 ```
-lora-tweetsumm/
-├── README.md                 # This file
-├── pyproject.toml            # Dependencies & project metadata (PEP 621)
-├── Dockerfile                # Container for reproducible runs
-├── LICENSE                   # MIT License
-│
-├── configs/
-│   ├── default.yaml          # Full training config (r=4, 300 samples)
-│   ├── fast.yaml             # Quick iteration (100 samples, 1 epoch)
-│   └── t5-base.yaml          # T5-Base for higher quality experiments
-│
-├── src/
-│   ├── __init__.py           # Package metadata
-│   ├── config.py             # YAML-based configuration dataclasses
-│   ├── data.py               # Dataset loading & tokenization
-│   ├── model.py              # T5 + LoRA model construction & stats
-│   ├── train.py              # Seq2SeqTrainer setup & execution (with timing)
-│   └── inference.py          # Summary generation utilities
-│
-├── scripts/
-│   ├── train.py              # Training entrypoint
-│   ├── evaluate.py           # ROUGE evaluation with baseline comparison
-│   ├── experiments.py        # Rank ablation experiments & visualization
-│   └── demo.py               # Gradio interactive demo
-│
-├── space/                    # Gradio Space build (requires HF PRO — see DEPLOY.md)
-├── space-static/             # Static Space: in-browser demo via Transformers.js (live)
-│
-├── tests/                    # Unit & integration test suite
-│   ├── conftest.py           # Shared fixtures
-│   ├── test_config.py        # Configuration tests
-│   ├── test_data.py          # Data pipeline tests
-│   ├── test_model.py         # Model construction tests (slow)
-│   └── test_inference.py     # Inference tests (slow)
-│
-├── notebooks/
-│   └── exploration.ipynb     # Narrative walkthrough & analysis
-│
-└── results/                  # Saved evaluation metrics & plots
+configs/
+├── default.yaml       # full training run (r=4, 300 samples) — the default
+├── fast.yaml          # fast iteration (100 samples, 1 epoch)
+└── t5-base.yaml       # T5-Base, for higher-quality experiments
+
+scripts/               # entrypoints
+├── train.py           # training
+├── evaluate.py        # ROUGE, with baseline comparison
+├── experiments.py     # rank ablation and plots
+└── demo.py            # Gradio demo
+
+space/                 # Gradio Space build (requires HF PRO)
+space-static/          # static Space: runs in the browser via Transformers.js
 ```
 
----
+Space deployment: [`space/DEPLOY.md`](space/DEPLOY.md). Library code lives in
+`src/` (config, data, model, train, inference).
 
 ## ⚙️ Configuration
 
