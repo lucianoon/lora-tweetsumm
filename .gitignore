@@ -69,5 +69,4 @@ hub-adapter/
 hub-onnx/
 
 # Claude Code local artifacts
-.claude/agent-memory/
-.claude/agents/
+.claude/
